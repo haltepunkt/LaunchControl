@@ -34,6 +34,27 @@ typedef enum {
     DOMAIN_TYPE_GUI
 } domain_t;
 
+#define DICT_KEY_ASID       "asid"
+#define DICT_KEY_DOMAINPORT "domain-port"
+#define DICT_KEY_ERROR      "error"
+#define DICT_KEY_ERRORS     "errors"
+#define DICT_KEY_FD         "fd"
+#define DICT_KEY_GET        "get"
+#define DICT_KEY_HANDLE     "handle"
+#define DICT_KEY_LEGACY     "legacy"
+#define DICT_KEY_NAME       "name"
+#define DICT_KEY_NAMES      "names"
+#define DICT_KEY_OUT        "out"
+#define DICT_KEY_OUTGSK     "outgsk"
+#define DICT_KEY_PATHS      "paths"
+#define DICT_KEY_ROUTINE    "routine"
+#define DICT_KEY_SELF       "self"
+#define DICT_KEY_SESSION    "session"
+#define DICT_KEY_SIGNAL     "signal"
+#define DICT_KEY_SUBSYSTEM  "subsystem"
+#define DICT_KEY_TYPE       "type"
+#define DICT_KEY_VALUE      "value"
+
 #define ROUTINE_MANAGER     0x12d
 #define ROUTINE_KICKSTART   0x2be
 #define ROUTINE_LOAD        0x320
@@ -60,9 +81,9 @@ typedef enum {
     
 }
 
-- (int64_t)manageruid;
-- (int64_t)managerpid;
-- (NSString *)managername;
+- (int64_t)managerUID;
+- (int64_t)managerPID;
+- (NSString *)managerName;
 - (BOOL)kickstart:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
 - (BOOL)bootstrap:(NSString * _Nonnull)path domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
 - (BOOL)bootout:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
