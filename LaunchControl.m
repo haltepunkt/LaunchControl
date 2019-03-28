@@ -312,7 +312,7 @@
 
 - (NSString *)versionVariant:(const char *)version_variant {
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_TYPE, DICT_KEY_HANDLE, version_variant},
-                                 (xpc_object_t []){xpc_uint64_create(DOMAIN_TYPE_USER), xpc_uint64_create(0), XPC_BOOL_TRUE},
+                                 (xpc_object_t []){xpc_uint64_create(DOMAIN_TYPE_SYSTEM), xpc_uint64_create(0), XPC_BOOL_TRUE},
                                  3);
     
     int fd[2];
@@ -354,6 +354,9 @@
         int64_t error_code = xpc_dictionary_get_int64(*reply, DICT_KEY_ERROR);
         
         if (error_code) {
+#if LAUNCHCONTROL_LOGGING
+            NSLog(@"Error description: %s", xpc_strerror(error_code));
+#endif
             if (error) {
                 *error = [NSError errorWithDomain:@"com.haltepunkt.LaunchControl" code:error_code userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:xpc_strerror(error_code)]}];
             }
@@ -365,16 +368,19 @@
         
         if (errors_dict) {
             if (xpc_dictionary_get_count(errors_dict)) {
-                if (error) {
-                    __block uint64_t code;
+                __block uint64_t code;
+                
+                xpc_dictionary_apply(errors_dict, ^bool(const char * _Nonnull key, xpc_object_t _Nonnull value) {
+                    code = xpc_dictionary_get_int64(errors_dict, key);
                     
-                    xpc_dictionary_apply(errors_dict, ^bool(const char * _Nonnull key, xpc_object_t _Nonnull value) {
-                        code = xpc_dictionary_get_int64(errors_dict, key);
-                        
-                        return FALSE;
-                    });
-                    
-                    if (code) {
+                    return FALSE;
+                });
+                
+                if (code) {
+#if LAUNCHCONTROL_LOGGING
+                    NSLog(@"Error description: %s", xpc_strerror(error_code));
+#endif
+                    if (error) {
                         *error = [NSError errorWithDomain:@"com.haltepunkt.LaunchControl" code:code userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:xpc_strerror(code)]}];
                     }
                 }
