@@ -3,7 +3,9 @@
 
 #include <xpc/xpc.h>
 
+#ifndef LAUNCHCONTROL_LOGGING
 #define LAUNCHCONTROL_LOGGING 0
+#endif
 
 struct _os_alloc_once_s {
     long once;
@@ -24,14 +26,14 @@ struct xpc_global_data {
 };
 
 typedef enum {
-    DOMAIN_TYPE_SYSTEM = 1,
-    DOMAIN_TYPE_USER,
-    DOMAIN_TYPE_LOGIN,
-    DOMAIN_TYPE_SESSION,
-    DOMAIN_TYPE_5,
-    DOMAIN_TYPE_6,
-    DOMAIN_TYPE_LEGACY,
-    DOMAIN_TYPE_GUI
+    DOMAIN_SYSTEM = 1,
+    DOMAIN_USER,
+    DOMAIN_LOGIN,
+    DOMAIN_SESSION,
+    DOMAIN_PID,
+    DOMAIN_6,
+    DOMAIN_LEGACY,
+    DOMAIN_GUI
 } domain_t;
 
 #define DICT_KEY_ASID       "asid"
@@ -81,25 +83,190 @@ typedef enum {
     
 }
 
+/**
+ Returns the UID of the current launchd session.
+
+ @return An int64_t integer.
+ */
 - (int64_t)managerUID;
+
+/**
+ Returns the PID of the launchd controlling the session.
+
+ @return An int64_t integer.
+ */
 - (int64_t)managerPID;
+
+/**
+ Returns the name of the current launchd session.
+ 
+ @return An NSString object.
+ */
 - (NSString *)managerName;
-- (BOOL)kickstart:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
-- (BOOL)bootstrap:(NSString * _Nonnull)path domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
-- (BOOL)bootout:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Forces an existing service to kickstart for a given domain and handle.
+
+ @param name The name of the service to kickstart.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully kickstarted, otherwise FALSE.
+ */
+- (BOOL)kickstart:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Bootstraps a service into a domain.
+ 
+ @param path The path of the service to bootstrap.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully bootstrapped, otherwise FALSE.
+ */
+- (BOOL)bootstrap:(NSString * _Nonnull)path domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Removes a service from a domain.
+
+ @param name The name of the service to remove.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully removed, otherwise FALSE.
+ */
+- (BOOL)bootout:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Bootstraps a service.
+ 
+ @note Legacy command, instead use bootstrap:domain:handle:error:
+
+ @param path The path of the service to bootstrap.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully bootstrapped, otherwise FALSE.
+ */
 - (BOOL)load:(NSString * _Nonnull)path error:(NSError **)error;
+
+/**
+ Unloads a service.
+ 
+ @note Legacy command, instead use bootout:domain:handle:error
+
+ @param path The path of the service to unload.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully unloaded, otherwise FALSE.
+ */
 - (BOOL)unload:(NSString * _Nonnull)path error:(NSError **)error;
-- (BOOL)enable:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
-- (BOOL)disable:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
-- (BOOL)kill:(NSString * _Nonnull)name signal:(int)signal domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Enables a service.
+
+ @param name The name of the service to enable.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully enabled, otherwise FALSE.
+ */
+- (BOOL)enable:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Disables a service.
+
+ @param name The name of the service to disable.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully disabled, otherwise FALSE.
+ */
+- (BOOL)disable:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Sends a signal to a service.
+
+ @param name The name of the service to send the signal to.
+ @param signal The signal to send to the service.
+ @param domain The domain to target, such as DOMAIN_SYSTEM, DOMAIN_USER, DOMAIN_LOGIN, DOMAIN_GUI, DOMAIN_SESSION, or DOMAIN_PID.
+ @param handle The handle to target, such as a UID, an ASID, or a PID.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the signal was successfully sent, otherwise FALSE.
+ */
+- (BOOL)kill:(NSString * _Nonnull)name signal:(int)signal domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error;
+
+/**
+ Starts a service.
+
+ @param name The name of the service to start.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully started, otherwise FALSE.
+ */
 - (BOOL)start:(NSString * _Nonnull)name error:(NSError **)error;
+
+/**
+ Stops a service.
+
+ @param name The name of the service to stop.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully stopped, otherwise FALSE.
+ */
 - (BOOL)stop:(NSString * _Nonnull)name error:(NSError **)error;
+
+/**
+ Lists information about services.
+
+ @return An NSArray object containing Service objects.
+ */
 - (NSArray <Service *>*)list;
+
+/**
+ Unloads a service.
+
+ @param name The name of the service to unload.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the service was successfully unloaded, otherwise FALSE.
+ */
 - (BOOL)remove:(NSString * _Nonnull)name error:(NSError **)error;
+
+/**
+ Sets an environment variable.
+
+ @param key The key of the environment variable to set.
+ @param value The new value of the environment variable to set.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the environment variable was successfully set, otherwise FALSE.
+ */
 - (BOOL)setEnvironmentVariable:(NSString * _Nonnull)key value:(NSString *)value error:(NSError **)error;
+
+/**
+ Unsets an environment variable.
+
+ @param key The key of the environment variable to unset.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return TRUE if the environment variable was successfully unset, otherwise FALSE.
+ */
 - (BOOL)unsetEnvironmentVariable:(NSString * _Nonnull)key error:(NSError **)error;
+
+/**
+ Returns the value of an environment variable.
+
+ @param key The key of the environment variable to return its value.
+ @param error If an error occurs, upon return contains an NSError object that describes the problem. If you are not interested in possible errors, pass in NULL.
+ @return An NSString object.
+ */
 - (NSString *)getEnvironmentVariable:(NSString * _Nonnull)key error:(NSError **)error;
+
+/**
+ Returns the launchd version.
+
+ @return An NSString object.
+ */
 - (NSString *)version;
+
+/**
+ Returns the launchd variant.
+
+ @return An NSString object.
+ */
 - (NSString *)variant;
 
 @end

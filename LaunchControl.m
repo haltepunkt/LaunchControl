@@ -24,7 +24,7 @@
 
 - (int64_t)managerUIDPID:(int)outgsk {
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_OUTGSK, DICT_KEY_SELF, DICT_KEY_TYPE, DICT_KEY_GET},
-                                 (xpc_object_t []){xpc_uint64_create(0), xpc_uint64_create(outgsk), XPC_BOOL_TRUE, xpc_uint64_create(DOMAIN_TYPE_LEGACY), XPC_BOOL_TRUE},
+                                 (xpc_object_t []){xpc_uint64_create(0), xpc_uint64_create(outgsk), XPC_BOOL_TRUE, xpc_uint64_create(DOMAIN_LEGACY), XPC_BOOL_TRUE},
                                  5);
     
     xpc_dictionary_set_mach_send(dict, DICT_KEY_DOMAINPORT, port);
@@ -41,12 +41,12 @@
         }
     }
     
-    return 0;
+    return -1;
 }
 
 - (NSString *)managerName {
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_OUTGSK, DICT_KEY_SELF, DICT_KEY_TYPE, DICT_KEY_GET},
-                                 (xpc_object_t []){xpc_uint64_create(0), xpc_uint64_create(6), XPC_BOOL_TRUE, xpc_uint64_create(DOMAIN_TYPE_LEGACY), XPC_BOOL_TRUE},
+                                 (xpc_object_t []){xpc_uint64_create(0), xpc_uint64_create(6), XPC_BOOL_TRUE, xpc_uint64_create(DOMAIN_LEGACY), XPC_BOOL_TRUE},
                                  5);
     
     xpc_dictionary_set_mach_send(dict, DICT_KEY_DOMAINPORT, port);
@@ -66,14 +66,14 @@
     return nil;
 }
 
-- (BOOL)kickstart:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
-    if (type == DOMAIN_TYPE_SYSTEM) {
+- (BOOL)kickstart:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
+    if (domain == DOMAIN_SYSTEM) {
         handle = 0;
     }
     
-    else if (type == DOMAIN_TYPE_GUI) {
+    else if (domain == DOMAIN_GUI) {
         dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_TYPE},
-                                     (xpc_object_t []){xpc_uint64_create(handle), xpc_uint64_create(DOMAIN_TYPE_USER)},
+                                     (xpc_object_t []){xpc_uint64_create(handle), xpc_uint64_create(DOMAIN_USER)},
                                      2);
         
         xpc_object_t reply;
@@ -84,13 +84,13 @@
                 
                 handle = asid;
                 
-                type = DOMAIN_TYPE_LOGIN;
+                domain = DOMAIN_LOGIN;
             }
         }
     }
     
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_NAME, DICT_KEY_TYPE},
-                                 (xpc_object_t []){xpc_uint64_create(handle), xpc_string_create([name UTF8String]), xpc_uint64_create(type)},
+                                 (xpc_object_t []){xpc_uint64_create(handle), xpc_string_create([name UTF8String]), xpc_uint64_create(domain)},
                                  3);
     
     xpc_object_t reply;
@@ -98,24 +98,24 @@
     return [self pipeRoutine:ROUTINE_KICKSTART subsystem:2 reply:&reply error:&*error];
 }
 
-- (BOOL)bootstrap:(NSString * _Nonnull)path domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
-    return [self bootstrap:path bootout:FALSE domain:type handle:handle error:&*error];
+- (BOOL)bootstrap:(NSString * _Nonnull)path domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
+    return [self bootstrap:path bootout:FALSE domain:domain handle:handle error:&*error];
 }
 
-- (BOOL)bootout:(NSString * _Nonnull)path domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
-    return [self bootstrap:path bootout:TRUE domain:type handle:handle error:&*error];
+- (BOOL)bootout:(NSString * _Nonnull)path domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
+    return [self bootstrap:path bootout:TRUE domain:domain handle:handle error:&*error];
 }
 
-- (BOOL)bootstrap:(NSString * _Nonnull)path bootout:(BOOL)bootout domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
+- (BOOL)bootstrap:(NSString * _Nonnull)path bootout:(BOOL)bootout domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
     xpc_object_t paths = xpc_array_create((xpc_object_t []){xpc_string_create([path UTF8String])}, 1);
     
-    if (type == DOMAIN_TYPE_SYSTEM) {
+    if (domain == DOMAIN_SYSTEM) {
         handle = 0;
     }
     
-    else if (type == DOMAIN_TYPE_GUI) {
+    else if (domain == DOMAIN_GUI) {
         dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_TYPE},
-                                     (xpc_object_t []){xpc_uint64_create(handle), xpc_uint64_create(DOMAIN_TYPE_USER)},
+                                     (xpc_object_t []){xpc_uint64_create(handle), xpc_uint64_create(DOMAIN_USER)},
                                      2);
         
         xpc_object_t reply;
@@ -124,15 +124,17 @@
             if (reply) {
                 uint64_t asid = xpc_dictionary_get_uint64(reply, DICT_KEY_ASID);
                 
-                handle = asid;
-                
-                type = DOMAIN_TYPE_LOGIN;
+                if (asid) {
+                    handle = asid;
+                    
+                    domain = DOMAIN_LOGIN;
+                }
             }
         }
     }
     
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_PATHS, DICT_KEY_TYPE},
-                                 (xpc_object_t []){xpc_uint64_create(handle), paths, xpc_uint64_create(type)},
+                                 (xpc_object_t []){xpc_uint64_create(handle), paths, xpc_uint64_create(domain)},
                                  3);
     
     xpc_object_t reply;
@@ -162,19 +164,19 @@
     return [self pipeRoutine:(unload ? ROUTINE_UNLOAD : ROUTINE_LOAD) subsystem:3 reply:&reply error:&*error];
 }
 
-- (BOOL)enable:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
-    return [self enable:name disable:FALSE domain:type handle:handle error:&*error];
+- (BOOL)enable:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
+    return [self enable:name disable:FALSE domain:domain handle:handle error:&*error];
 }
 
-- (BOOL)disable:(NSString * _Nonnull)name domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
-    return [self enable:name disable:TRUE domain:type handle:handle error:&*error];
+- (BOOL)disable:(NSString * _Nonnull)name domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
+    return [self enable:name disable:TRUE domain:domain handle:handle error:&*error];
 }
 
-- (BOOL)enable:(NSString * _Nonnull)name disable:(BOOL)disable domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
+- (BOOL)enable:(NSString * _Nonnull)name disable:(BOOL)disable domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
     xpc_object_t names = xpc_array_create((xpc_object_t []){xpc_string_create([name UTF8String])}, 1);
     
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_HANDLE, DICT_KEY_NAME, DICT_KEY_TYPE, DICT_KEY_NAMES},
-                                 (xpc_object_t []){xpc_uint64_create(handle), xpc_string_create([name UTF8String]), xpc_uint64_create(type), names},
+                                 (xpc_object_t []){xpc_uint64_create(handle), xpc_string_create([name UTF8String]), xpc_uint64_create(domain), names},
                                  4);
     
     xpc_object_t reply;
@@ -182,9 +184,9 @@
     return [self pipeRoutine:(disable ? ROUTINE_DISABLE : ROUTINE_ENABLE) subsystem:3 reply:&reply error:&*error];
 }
 
-- (BOOL)kill:(NSString * _Nonnull)name signal:(int)signal domain:(domain_t)type handle:(uint64_t)handle error:(NSError **)error {
+- (BOOL)kill:(NSString * _Nonnull)name signal:(int)signal domain:(domain_t)domain handle:(uint64_t)handle error:(NSError **)error {
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_NAME, DICT_KEY_SIGNAL, DICT_KEY_HANDLE, DICT_KEY_TYPE},
-                                 (xpc_object_t []){xpc_string_create([name UTF8String]), xpc_int64_create(signal), xpc_uint64_create(handle), xpc_uint64_create(type)},
+                                 (xpc_object_t []){xpc_string_create([name UTF8String]), xpc_int64_create(signal), xpc_uint64_create(handle), xpc_uint64_create(domain)},
                                  4);
     
     xpc_object_t reply;
@@ -312,7 +314,7 @@
 
 - (NSString *)versionVariant:(const char *)version_variant {
     dict = xpc_dictionary_create((const char *[]){DICT_KEY_TYPE, DICT_KEY_HANDLE, version_variant},
-                                 (xpc_object_t []){xpc_uint64_create(DOMAIN_TYPE_SYSTEM), xpc_uint64_create(0), XPC_BOOL_TRUE},
+                                 (xpc_object_t []){xpc_uint64_create(DOMAIN_SYSTEM), xpc_uint64_create(0), XPC_BOOL_TRUE},
                                  3);
     
     int fd[2];
@@ -384,9 +386,9 @@
                         *error = [NSError errorWithDomain:@"com.haltepunkt.LaunchControl" code:code userInfo:@{NSLocalizedDescriptionKey: [NSString stringWithUTF8String:xpc_strerror(code)]}];
                     }
                 }
-                
-                return FALSE;
             }
+            
+            return FALSE;
         }
         
         return TRUE;
@@ -396,7 +398,7 @@
 }
 
 - (void)setLegacyValues {
-    xpc_dictionary_set_uint64(dict, DICT_KEY_TYPE, DOMAIN_TYPE_LEGACY);
+    xpc_dictionary_set_uint64(dict, DICT_KEY_TYPE, DOMAIN_LEGACY);
     xpc_dictionary_set_uint64(dict, DICT_KEY_HANDLE, 0);
     xpc_dictionary_set_mach_send(dict, DICT_KEY_DOMAINPORT, port);
     xpc_dictionary_set_bool(dict, DICT_KEY_LEGACY, TRUE);
