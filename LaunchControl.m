@@ -78,7 +78,7 @@
         
         xpc_object_t reply;
         
-        if ([self pipeRoutine:0x33b subsystem:3 reply:&reply error:&*error]) {
+        if ([self pipeRoutine:ROUTINE_0x33b subsystem:3 reply:&reply error:&*error]) {
             if (reply) {
                 uint64_t asid = xpc_dictionary_get_uint64(reply, DICT_KEY_ASID);
                 
@@ -120,7 +120,7 @@
         
         xpc_object_t reply;
         
-        if ([self pipeRoutine:0x33b subsystem:3 reply:&reply error:&*error]) {
+        if ([self pipeRoutine:ROUTINE_0x33b subsystem:3 reply:&reply error:&*error]) {
             if (reply) {
                 uint64_t asid = xpc_dictionary_get_uint64(reply, DICT_KEY_ASID);
                 

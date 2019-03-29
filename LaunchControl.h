@@ -57,21 +57,33 @@ typedef enum {
 #define DICT_KEY_TYPE       "type"
 #define DICT_KEY_VALUE      "value"
 
-#define ROUTINE_MANAGER     0x12d
-#define ROUTINE_KICKSTART   0x2be
-#define ROUTINE_LOAD        0x320
-#define ROUTINE_UNLOAD      0x321
-#define ROUTINE_ENABLE      0x328
-#define ROUTINE_DISABLE     0x329
-#define ROUTINE_KILL        0x32c
-#define ROUTINE_START       0x32d
-#define ROUTINE_STOP        0x32e
-#define ROUTINE_LIST        0x32f
-#define ROUTINE_REMOVE      0x330
-#define ROUTINE_SETUNSETENV 0x333
-#define ROUTINE_GETENV      0x334
-#define ROUTINE_PROCINFO    0x336
-#define ROUTINE_VERSION     0x33c
+#define ROUTINE_MANAGER         0x12d
+#define ROUTINE_KICKSTART       0x2be
+#define ROUTINE_ATTACH          0x2bf
+#define ROUTINE_CONFIGURE       0x2c1
+#define ROUTINE_SIGNAL          0x2c3
+#define ROUTINE_0x2c4           0x2c4
+#define ROUTINE_RUNSTATS        0x2c5
+#define ROUTINE_LOAD            0x320
+#define ROUTINE_UNLOAD          0x321
+#define ROUTINE_ENABLE          0x328
+#define ROUTINE_DISABLE         0x329
+#define ROUTINE_KILL            0x32c
+#define ROUTINE_START           0x32d
+#define ROUTINE_STOP            0x32e
+#define ROUTINE_LIST            0x32f
+#define ROUTINE_REMOVE          0x330
+#define ROUTINE_SETUNSETENV     0x333
+#define ROUTINE_GETENV          0x334
+#define ROUTINE_PROCINFO        0x336
+#define ROUTINE_0x339           0x339
+#define ROUTINE_0x33a           0x33a
+#define ROUTINE_0x33b           0x33b
+#define ROUTINE_VERSION         0x33c
+#define ROUTINE_DUMPSTATE       0x342
+#define ROUTINE_0x343           0x343
+#define ROUTINE_BOOTSHELL       0x344
+#define ROUTINE_DUMPJPCATEGORY  0x345
 
 @interface LaunchControl : NSObject {
     
